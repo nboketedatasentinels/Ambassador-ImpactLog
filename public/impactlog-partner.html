@@ -129,10 +129,8 @@
           <a href="/my-services.html" class="partner-nav-link"><i class="bx bx-briefcase-alt-2"></i><span>Services</span></a>
           <a href="/applications.html" class="partner-nav-link"><i class="bx bx-file"></i><span>Applications</span></a>
           <a
-            href="#"
-            onclick="alert('Impact Log is coming soon — available in 1 month!'); return false;"
-            class="partner-nav-link"
-            style="opacity:0.5; cursor:not-allowed;"
+            href="/impactlog-partner.html"
+            class="partner-nav-link active"
           ><i class="bx bx-line-chart"></i><span>Impact Log</span></a>
           <a href="/feedback-support-partner.html" class="partner-nav-link"><i class="bx bx-help-circle"></i><span>Feedback</span></a>
           <a href="/chat-pillar-partner.html" class="partner-nav-link"><i class="bx bxs-group"></i><span>T4L Ecosystem</span></a>
@@ -158,6 +156,9 @@
             <button onclick="openModal('createEntryModal')" class="btn-secondary text-sm flex items-center gap-2">
               <i class="bx bx-plus-circle"></i> Log Impact
             </button>
+            <button onclick="openModal('createBusinessModal')" class="btn-secondary text-sm flex items-center gap-2">
+              <i class="bx bx-briefcase-alt"></i> Log Business Outcome
+            </button>
             <button onclick="openModal('createEventModal')" class="btn-primary text-sm flex items-center gap-2">
               <i class="bx bx-calendar-plus"></i> Create Shared Event
             </button>
@@ -175,13 +176,26 @@
           <div class="impact-stat-card">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><i class="bx bx-time-five text-blue-600 text-xl"></i></div>
-              <div><p class="text-xs text-gray-500 font-medium">Hours Contributed</p><p class="text-xl font-bold text-gray-900" id="statHours">0</p></div>
+              <div class="flex-1">
+                <p class="text-xs text-gray-500 font-medium">Hours Contributed (ESG)</p>
+                <p class="text-xl font-bold text-gray-900" id="statHours">0</p>
+                <div class="mt-1">
+                  <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="hoursProgressBar" class="h-1.5 bg-blue-500 rounded-full" style="width:0%;"></div>
+                  </div>
+                  <p class="text-[11px] text-gray-400 mt-1" id="hoursProgressText">0 / 25h this year</p>
+                </div>
+              </div>
             </div>
           </div>
           <div class="impact-stat-card">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0"><i class="bx bx-dollar text-green-600 text-xl"></i></div>
-              <div><p class="text-xs text-gray-500 font-medium">USD Value</p><p class="text-xl font-bold text-gray-900" id="statUsd">$0</p></div>
+              <div>
+                <p class="text-xs text-gray-500 font-medium">Total Impact Value (USD)</p>
+                <p class="text-xl font-bold text-gray-900" id="statUsd">$0</p>
+                <p class="text-[11px] text-gray-400 mt-1" id="statUsdBreakdown"></p>
+              </div>
             </div>
           </div>
           <div class="impact-stat-card">
@@ -198,13 +212,16 @@
           </div>
         </div>
 
-        <!-- Share My Impact & Export Report Buttons -->
+        <!-- Share My Impact, Export & Bulk Upload Buttons -->
         <div class="mb-6 flex gap-3 flex-wrap">
           <button onclick="openShareMyImpact()" class="btn-secondary text-sm flex items-center gap-2">
             <i class="bx bx-share-alt"></i> Share My Impact
           </button>
           <button onclick="exportImpactReport()" class="btn-secondary text-sm flex items-center gap-2">
             <i class="bx bx-download"></i> Export Impact Report
+          </button>
+          <button onclick="openModal('bulkUploadModal')" class="btn-secondary text-sm flex items-center gap-2">
+            <i class="bx bx-upload"></i> Bulk Upload (CSV)
           </button>
         </div>
 
@@ -238,6 +255,41 @@
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- ===== BULK UPLOAD MODAL ===== -->
+    <div id="bulkUploadModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Bulk Upload Impact Entries</h2>
+            <p class="text-sm text-gray-500 mt-1">Upload multiple ESG and Business Outcome entries from a CSV file.</p>
+          </div>
+          <button onclick="closeModal('bulkUploadModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="bx bx-x text-xl text-gray-500"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="bg-purple-50 border border-purple-100 rounded-lg p-3 text-xs text-gray-700">
+            <p class="font-semibold text-purple-800 mb-1">Download the official template first</p>
+            <p>Use the CSV template so your columns and values match the Impact Log requirements. The template includes example rows and inline instructions.</p>
+            <button onclick="downloadBulkTemplate()" class="btn-secondary text-xs mt-3 flex items-center gap-2">
+              <i class="bx bx-download"></i> Download CSV template
+            </button>
+          </div>
+          <div>
+            <label class="form-label">Paste CSV content here</label>
+            <textarea id="bulkCsvInput" class="form-textarea" rows="8" placeholder="Paste the full CSV content (including header row) here..."></textarea>
+            <p class="text-xs text-gray-400 mt-1">For now, paste CSV text from your file. (File upload can be added later.)</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="runBulkUpload()" class="btn-primary text-sm flex items-center gap-2" id="bulkUploadBtn">
+              <span>Validate &amp; Import</span>
+              <div class="spinner hidden" id="bulkUploadSpinner"></div>
+            </button>
+            <button type="button" onclick="closeModal('bulkUploadModal')" class="btn-secondary text-sm">Close</button>
+          </div>
+          <div id="bulkUploadResult" class="text-xs text-gray-700 space-y-1"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ===== CREATE SHARED IMPACT EVENT MODAL ===== -->
@@ -310,29 +362,227 @@
           <button onclick="closeModal('createEntryModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="bx bx-x text-xl text-gray-500"></i></button>
         </div>
         <form id="createEntryForm" class="p-6 space-y-4">
-          <div><label class="form-label">Title *</label><input type="text" name="title" class="form-input" placeholder="e.g. Corporate sustainability workshop" required></div>
-          <div><label class="form-label">Description</label><textarea name="description" class="form-textarea" rows="3" placeholder="What did your organization do?"></textarea></div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="form-label">ESG Category *</label>
-              <select name="esg_category" class="form-select" required>
-                <option value="">Select category</option>
-                <option value="environmental">Environmental</option>
-                <option value="social">Social</option>
-                <option value="governance">Governance</option>
-              </select>
+          <!-- Step 1: Category & Activity -->
+          <div class="space-y-3">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 1 of 3 · Category & Activity</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">ESG Category *</label>
+                <select name="esg_category" class="form-select" id="esgCategorySelect" required>
+                  <option value="">Select category</option>
+                  <option value="environmental">Environmental</option>
+                  <option value="social">Social</option>
+                  <option value="governance">Governance</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Impact Activity *</label>
+                <select name="activity_key" class="form-select" id="activityKeySelect" required>
+                  <option value="">Select activity (loads from ESG rates)</option>
+                </select>
+                <p id="activityHelper" class="text-xs text-gray-400 mt-1"></p>
+              </div>
             </div>
-            <div><label class="form-label">Activity Date</label><input type="date" name="activity_date" class="form-input"></div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div><label class="form-label">People Impacted</label><input type="number" name="people_impacted" class="form-input" placeholder="0" min="0" step="any"></div>
-            <div><label class="form-label">Hours Contributed</label><input type="number" name="hours_contributed" class="form-input" placeholder="0" min="0" step="any"></div>
-            <div><label class="form-label">USD Value</label><input type="number" name="usd_value" class="form-input" placeholder="0" min="0" step="any"></div>
+
+          <!-- Step 2: Numbers -->
+          <div class="space-y-3">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 2 of 3 · Numbers</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="form-label" id="peopleLabel">People impacted *</label>
+                <input type="number" name="people_impacted" class="form-input" id="peopleInput" placeholder="How many people did this reach?" min="0" step="any" required>
+              </div>
+              <div>
+                <label class="form-label">Hours contributed *</label>
+                <input type="number" name="hours_contributed" class="form-input" id="hoursInput" placeholder="How many hours did this take?" min="0" step="any" required>
+              </div>
+              <div>
+                <label class="form-label">Activity Date</label>
+                <input type="date" name="activity_date" class="form-input" id="activityDateInput">
+              </div>
+            </div>
+            <div class="bg-purple-50 border border-purple-100 rounded-xl p-3 text-xs text-gray-700" id="usdPreviewBox" style="display:none;">
+              <p class="font-semibold text-purple-800 mb-1">Estimated Social Value (auto-calculated)</p>
+              <p id="usdPreviewImpact"></p>
+              <p id="usdPreviewHours"></p>
+              <p id="usdPreviewTotal" class="font-semibold text-purple-900 mt-1"></p>
+              <p class="text-[11px] text-gray-500 mt-1">Based on benchmark rates for this activity and the Independent Sector volunteer time valuation ($33.49/hour, 2024).</p>
+            </div>
           </div>
-          <div><label class="form-label">Evidence Link</label><input type="url" name="evidence_link" class="form-input" placeholder="https://... (optional)"></div>
+
+          <!-- Step 3: Describe & Evidence -->
+          <div class="space-y-3">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 3 of 3 · Describe & Submit</p>
+            <div>
+              <label class="form-label">Activity title *</label>
+              <input type="text" name="title" class="form-input" placeholder="e.g. Digital skills workshop for youth" maxlength="100" required>
+            </div>
+            <div>
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-textarea" rows="3" placeholder="Briefly describe what you did and the result." maxlength="500"></textarea>
+            </div>
+            <div>
+              <label class="form-label">Evidence Link (optional)</label>
+              <input type="url" name="evidence_link" class="form-input" placeholder="https://...">
+            </div>
+            <div class="mt-2 border-t border-gray-100 pt-3 space-y-2">
+              <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" name="send_for_verification" value="1">
+                <span>Send to external auditor for verification (Tier 3)</span>
+              </label>
+              <p class="text-xs text-gray-400">If enabled, we will send this impact log summary to an external auditor for independent verification. They can confirm or decline the entry.</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">Verifier name</label>
+                  <input type="text" name="verifier_name" class="form-input" placeholder="e.g. Programme Lead">
+                </div>
+                <div>
+                  <label class="form-label">Verifier email</label>
+                  <input type="email" name="verifier_email" class="form-input" placeholder="e.g. partner@yourorg.com">
+                </div>
+              </div>
+              <div>
+                <label class="form-label">Verifier role (optional)</label>
+                <input type="text" name="verifier_role" class="form-input" placeholder="e.g. Partner Contact, Ambassador">
+              </div>
+            </div>
+          </div>
+
           <div class="flex justify-end gap-3 pt-2">
             <button type="button" onclick="closeModal('createEntryModal')" class="btn-secondary text-sm">Cancel</button>
             <button type="submit" class="btn-primary text-sm flex items-center gap-2" id="createEntryBtn"><span>Log Impact</span><div class="spinner hidden" id="createEntrySpinner"></div></button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== CREATE BUSINESS OUTCOME ENTRY MODAL ===== -->
+    <div id="createBusinessModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Log Business Outcome</h2>
+            <p class="text-sm text-gray-500 mt-1">Record an operational improvement (8 Wastes + USD saved/created)</p>
+          </div>
+          <button onclick="closeModal('createBusinessModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="bx bx-x text-xl text-gray-500"></i></button>
+        </div>
+        <form id="createBusinessForm" class="p-6 space-y-4">
+          <!-- Step 1: Waste Category -->
+          <div class="space-y-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 1 of 4 · Waste Category</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">Primary Waste *</label>
+                <select name="waste_primary" class="form-select" required>
+                  <option value="">Select primary waste (8 Wastes)</option>
+                  <option value="DEF">Defects</option>
+                  <option value="OVR">Overproduction</option>
+                  <option value="WAI">Waiting</option>
+                  <option value="NUT">Non-utilised Talent</option>
+                  <option value="TRA">Transportation</option>
+                  <option value="INV">Inventory</option>
+                  <option value="MOT">Motion</option>
+                  <option value="EXP">Extra Processing</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Secondary Waste (optional)</label>
+                <select name="waste_secondary" class="form-select">
+                  <option value="">None</option>
+                  <option value="DEF">Defects</option>
+                  <option value="OVR">Overproduction</option>
+                  <option value="WAI">Waiting</option>
+                  <option value="NUT">Non-utilised Talent</option>
+                  <option value="TRA">Transportation</option>
+                  <option value="INV">Inventory</option>
+                  <option value="MOT">Motion</option>
+                  <option value="EXP">Extra Processing</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Improvement Method -->
+          <div class="space-y-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 2 of 4 · Improvement Method</p>
+            <div>
+              <label class="form-label">How did you fix it? *</label>
+              <select name="improvement_method" class="form-select" required>
+                <option value="">Select method</option>
+                <option value="automation">Automation</option>
+                <option value="process_change">Process change</option>
+                <option value="coaching_mentoring">Coaching / mentoring</option>
+                <option value="kaizen_ci">Kaizen / CI event</option>
+                <option value="policy_change">Policy / standard change</option>
+                <option value="pilot_mvp">Pilot / MVP</option>
+                <option value="workshop_delivered">Workshop delivered</option>
+                <option value="training_session">Training session</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Step 3: The Numbers -->
+          <div class="space-y-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 3 of 4 · The Numbers</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">USD saved/created *</label>
+                <input type="number" name="usd_saved" class="form-input" placeholder="e.g. 45000" min="0" step="any" required>
+              </div>
+              <div>
+                <label class="form-label">Date</label>
+                <input type="date" name="activity_date" class="form-input">
+              </div>
+            </div>
+            <div>
+              <label class="form-label">One-line outcome *</label>
+              <input type="text" name="outcome_statement" class="form-input" placeholder="e.g. 3 days faster invoice approvals, eliminated 2 FTE manual processing" maxlength="150" required>
+            </div>
+          </div>
+
+          <!-- Step 4: Describe & Verification -->
+          <div class="space-y-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 4 of 4 · Describe & Verify</p>
+            <div>
+              <label class="form-label">Title *</label>
+              <input type="text" name="title" class="form-input" placeholder="e.g. Digitised invoice approvals" maxlength="100" required>
+            </div>
+            <div>
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-textarea" rows="3" placeholder="What you changed and the result." maxlength="500"></textarea>
+            </div>
+            <div>
+              <label class="form-label">Evidence Link (optional)</label>
+              <input type="url" name="evidence_link" class="form-input" placeholder="https://...">
+            </div>
+            <div class="mt-2 border-t border-gray-100 pt-3 space-y-2">
+              <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" name="send_for_verification" value="1">
+                <span>Send to manager / finance for verification (Tier 2)</span>
+              </label>
+              <p class="text-xs text-gray-400">If enabled, we will email this summary to the verifier you specify below. They can confirm or decline the figure.</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">Verifier name</label>
+                  <input type="text" name="verifier_name" class="form-input" placeholder="e.g. Jane Doe">
+                </div>
+                <div>
+                  <label class="form-label">Verifier email</label>
+                  <input type="email" name="verifier_email" class="form-input" placeholder="e.g. finance@yourorg.com">
+                </div>
+              </div>
+              <div>
+                <label class="form-label">Verifier role (optional)</label>
+                <input type="text" name="verifier_role" class="form-input" placeholder="e.g. Finance Manager, Head of Department">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" onclick="closeModal('createBusinessModal')" class="btn-secondary text-sm">Cancel</button>
+            <button type="submit" class="btn-primary text-sm flex items-center gap-2" id="createBusinessBtn"><span>Log Business Outcome</span><div class="spinner hidden" id="createBusinessSpinner"></div></button>
           </div>
         </form>
       </div>
@@ -360,6 +610,41 @@
       </div>
     </div>
 
+    <!-- ===== TIER 3 AUDIT MODAL ===== -->
+    <div id="tier3Modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Mark as Externally Audited (Tier 3)</h2>
+            <p class="text-sm text-gray-500 mt-1">Record an external audit for this impact entry.</p>
+          </div>
+          <button onclick="closeModal('tier3Modal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="bx bx-x text-xl text-gray-500"></i></button>
+        </div>
+        <form id="tier3Form" class="p-6 space-y-4" onsubmit="return false;">
+          <input type="hidden" id="tier3EntryId" />
+          <div>
+            <label class="form-label">Auditor name *</label>
+            <input type="text" id="tier3AuditorName" class="form-input" placeholder="e.g. External Auditor Name" required />
+          </div>
+          <div>
+            <label class="form-label">Auditor organization (optional)</label>
+            <input type="text" id="tier3AuditorOrg" class="form-input" placeholder="e.g. Audit Firm / NGO" />
+          </div>
+          <div>
+            <label class="form-label">Notes (optional)</label>
+            <textarea id="tier3AuditorNotes" class="form-textarea" rows="3" placeholder="Add any conditions, scope or comments from the external audit."></textarea>
+          </div>
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" onclick="closeModal('tier3Modal')" class="btn-secondary text-sm">Cancel</button>
+            <button type="button" onclick="submitTier3()" class="btn-primary text-sm flex items-center gap-2" id="tier3SubmitBtn">
+              <span>Save Tier 3</span>
+              <div class="spinner hidden" id="tier3Spinner"></div>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="/signin.js"></script>
     <script>
     // ============================================
@@ -368,6 +653,7 @@
     let myStats = {};
     let myEvents = [];
     let myEntries = [];
+    let partnerRates = [];
 
     document.addEventListener('DOMContentLoaded', function() {
       requireAuth('/partner-signin');
@@ -404,11 +690,29 @@
       // Forms
       document.getElementById('createEventForm').addEventListener('submit', handleCreateEvent);
       document.getElementById('createEntryForm').addEventListener('submit', handleCreateEntry);
+      const businessForm = document.getElementById('createBusinessForm');
+      if (businessForm) {
+        businessForm.addEventListener('submit', handleCreateBusinessEntry);
+      }
+
+      // ESG activity selection behaviour
+      const esgSelect = document.getElementById('esgCategorySelect');
+      const peopleInput = document.getElementById('peopleInput');
+      const hoursInput = document.getElementById('hoursInput');
+      if (esgSelect) {
+        esgSelect.addEventListener('change', () => {
+          populateActivityOptions(esgSelect.value);
+          recalcUsdPreview();
+        });
+      }
+      if (peopleInput) peopleInput.addEventListener('input', recalcUsdPreview);
+      if (hoursInput) hoursInput.addEventListener('input', recalcUsdPreview);
 
       // Load data
       loadStats();
       loadEvents();
       loadEntries();
+      loadPartnerRates();
     });
 
     function openModal(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow = 'hidden'; }
@@ -422,7 +726,21 @@
           myStats = data.stats;
           document.getElementById('statPeople').textContent = formatNumber(myStats.total_people_impacted);
           document.getElementById('statHours').textContent = formatNumber(myStats.total_hours);
-          document.getElementById('statUsd').textContent = '$' + formatNumber(myStats.total_usd_value);
+          // 25h/year ESG target progress (current year)
+          const esgHoursThisYear = myStats.esg_hours_this_year || 0;
+          const pct = Math.max(0, Math.min(100, (esgHoursThisYear / 25) * 100));
+          const bar = document.getElementById('hoursProgressBar');
+          const txt = document.getElementById('hoursProgressText');
+          if (bar) bar.style.width = pct + '%';
+          if (txt) txt.textContent = `${formatNumber(esgHoursThisYear)} / 25h this year`;
+          const esgUsd = myStats.esg_usd_value || 0;
+          const bizUsd = myStats.business_usd_value || 0;
+          const combined = esgUsd + bizUsd;
+          document.getElementById('statUsd').textContent = '$' + formatNumber(combined);
+          const breakdownEl = document.getElementById('statUsdBreakdown');
+          if (breakdownEl) {
+            breakdownEl.textContent = `ESG (benchmark-based): $${formatNumber(esgUsd)} · Business (user-reported): $${formatNumber(bizUsd)}`;
+          }
           document.getElementById('statScp').textContent = formatNumber(myStats.total_scp);
           document.getElementById('statEvents').textContent = myStats.events_created || 0;
         }
@@ -476,9 +794,96 @@
       }).join('');
     }
 
+    async function loadPartnerRates() {
+      try {
+        const res = await fetch('/api/partner/impact/rates', { credentials: 'include' });
+        const data = await res.json();
+        partnerRates = data.rates || [];
+        // If ESG category already selected, populate immediately
+        const esgSelect = document.getElementById('esgCategorySelect');
+        if (esgSelect && esgSelect.value) {
+          populateActivityOptions(esgSelect.value);
+        }
+      } catch (err) {
+        console.error('Failed to load ESG rate configuration:', err);
+      }
+    }
+
+    function populateActivityOptions(esgCategory) {
+      const activitySelect = document.getElementById('activityKeySelect');
+      const peopleLabel = document.getElementById('peopleLabel');
+      if (!activitySelect) return;
+
+      const filtered = (partnerRates || []).filter(r => !esgCategory || r.esg_category === esgCategory);
+
+      if (filtered.length === 0) {
+        activitySelect.innerHTML = '<option value="">No activities configured for this ESG category yet</option>';
+        if (peopleLabel) peopleLabel.textContent = 'People impacted *';
+        return;
+      }
+
+      activitySelect.innerHTML = '<option value="">Select activity</option>' + filtered.map(r => {
+        const label = r.activity_label || r.activity_key;
+        const unit = r.impact_unit || r.unit_label || '';
+        const unitRate = r.unit_rate_usd || 0;
+        const volRate = r.volunteer_hour_rate || 33.49;
+        return `<option value="${escapeHtml(r.activity_key)}"
+                  data-unit="${escapeHtml(unit)}"
+                  data-unit-rate="${unitRate}"
+                  data-vol-rate="${volRate}">${escapeHtml(label)}${unit ? ' (' + escapeHtml(unit) + ')' : ''}</option>`;
+      }).join('');
+
+      // Update helper text based on first option
+      const first = filtered[0];
+      const activityHelper = document.getElementById('activityHelper');
+      if (first && activityHelper) {
+        const unit = first.impact_unit || first.unit_label || 'people impacted';
+        activityHelper.textContent = `Impact unit: ${unit}. People impacted and hours contributed will be used to calculate USD social value automatically.`;
+      }
+
+      activitySelect.addEventListener('change', recalcUsdPreview, { once: false });
+    }
+
+    function recalcUsdPreview() {
+      const activitySelect = document.getElementById('activityKeySelect');
+      const peopleInput = document.getElementById('peopleInput');
+      const hoursInput = document.getElementById('hoursInput');
+      const box = document.getElementById('usdPreviewBox');
+      const impactP = document.getElementById('usdPreviewImpact');
+      const hoursP = document.getElementById('usdPreviewHours');
+      const totalP = document.getElementById('usdPreviewTotal');
+      if (!activitySelect || !peopleInput || !hoursInput || !box || !impactP || !hoursP || !totalP) return;
+
+      const opt = activitySelect.options[activitySelect.selectedIndex];
+      if (!opt || !opt.value) {
+        box.style.display = 'none';
+        return;
+      }
+
+      const unitRate = parseFloat(opt.getAttribute('data-unit-rate') || '0');
+      const volRate = parseFloat(opt.getAttribute('data-vol-rate') || '33.49');
+      const impactVal = parseFloat(peopleInput.value || '0');
+      const hoursVal = parseFloat(hoursInput.value || '0');
+
+      if ((!impactVal || impactVal <= 0) && (!hoursVal || hoursVal <= 0)) {
+        box.style.display = 'none';
+        return;
+      }
+
+      const impactUsd = impactVal * unitRate;
+      const hoursUsd = hoursVal * volRate;
+      const totalUsd = impactUsd + hoursUsd;
+
+      const fmtMoney = (v) => '$' + (v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      impactP.textContent = `Impact: ${impactVal || 0} × ${fmtMoney(unitRate)} = ${fmtMoney(impactUsd)}`;
+      hoursP.textContent = `Hours: ${hoursVal || 0} × ${fmtMoney(volRate)} = ${fmtMoney(hoursUsd)}`;
+      totalP.textContent = `Total estimated social value: ${fmtMoney(totalUsd)}`;
+      box.style.display = 'block';
+    }
+
     async function loadEntries() {
       try {
-        const res = await fetch('/api/impact/entries', { credentials: 'include' });
+        const res = await fetch('/api/partner/impact/entries', { credentials: 'include' });
         const data = await res.json();
         myEntries = data.entries || [];
         document.getElementById('entriesLoading').style.display = 'none';
@@ -491,27 +896,80 @@
     function renderEntries(entries) {
       const container = document.getElementById('entriesList');
       container.innerHTML = entries.map(entry => {
-        const catBadge = entry.esg_category === 'environmental' ? 'badge-env' : entry.esg_category === 'social' ? 'badge-social' : 'badge-gov';
-        const typeLbl = entry.entry_type === 'event_master' ? 'Event Creator' : entry.entry_type === 'event_derived' ? 'Event Participant' : 'Individual';
         const actDate = new Date(entry.activity_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        return `
-          <div class="entry-card">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1 flex-wrap">
-                  <span class="badge ${catBadge}">${entry.esg_category}</span>
-                  <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">${typeLbl}</span>
-                  <span class="text-xs text-gray-400">${actDate}</span>
+        const typeLbl = entry.entry_type === 'event_master' ? 'Event Creator' : entry.entry_type === 'event_derived' ? 'Event Participant' : 'Individual';
+        const tierLabel = entry.verification_level === 'tier_3'
+          ? 'Tier 3 • Externally Audited'
+          : entry.verification_level === 'tier_2'
+          ? 'Tier 2 • Verified'
+          : 'Tier 1 • Self-Reported';
+
+        if (entry.impact_type === 'business_outcome') {
+          // Business Outcome card
+          const usd = formatNumber(entry.usd_value);
+          return `
+            <div class="entry-card">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="badge badge-gov">Business</span>
+                    <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">${typeLbl}</span>
+                    <span class="text-xs text-gray-400">${actDate}</span>
+                    <span class="text-[10px] text-gray-500">${tierLabel}</span>
+                  </div>
+                  <h4 class="font-semibold text-gray-800 text-sm">${escapeHtml(entry.title)}</h4>
+                  ${entry.outcome_statement ? `<p class="text-xs text-gray-600 mt-1">${escapeHtml(entry.outcome_statement)}</p>` : ''}
+                  <p class="text-[11px] text-gray-400 mt-1">
+                    Waste: ${escapeHtml(entry.waste_primary || '')}${entry.waste_secondary ? ' · ' + escapeHtml(entry.waste_secondary) : ''} · Method: ${escapeHtml(entry.improvement_method || '')}
+                  </p>
+                  <div class="mt-1 flex flex-wrap gap-2">
+                    ${entry.verification_level !== 'tier_3' ? `
+                    <button class="text-[11px] text-purple-700 underline mt-1" onclick="openTier3Modal('${entry.entry_id}')">
+                      Mark as Externally Audited (Tier 3)
+                    </button>` : ''}
+                    <button class="text-[11px] text-gray-600 underline mt-1" onclick="openShareCard('${entry.entry_id}')">
+                      View share card
+                    </button>
+                  </div>
                 </div>
-                <h4 class="font-semibold text-gray-800 text-sm">${escapeHtml(entry.title)}</h4>
-                ${entry.description ? `<p class="text-xs text-gray-500 mt-1 line-clamp-1">${escapeHtml(entry.description)}</p>` : ''}
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-bold text-green-700">$${usd}</p>
+                  <p class="text-xs text-gray-400">Operational value (user-reported)</p>
+                </div>
               </div>
-              <div class="text-right flex-shrink-0">
-                <p class="text-sm font-bold text-purple-700">${formatNumber(entry.people_impacted)} ${escapeHtml(entry.impact_unit || 'people')}</p>
-                <p class="text-xs text-gray-400">SCP: ${formatNumber(entry.scp_earned)}</p>
+            </div>`;
+        } else {
+          // ESG / event card
+          const catBadge = entry.esg_category === 'environmental' ? 'badge-env' : entry.esg_category === 'social' ? 'badge-social' : 'badge-gov';
+          return `
+            <div class="entry-card">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="badge ${catBadge}">${entry.esg_category}</span>
+                    <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">${typeLbl}</span>
+                    <span class="text-xs text-gray-400">${actDate}</span>
+                    <span class="text-[10px] text-gray-500">${tierLabel}</span>
+                  </div>
+                  <h4 class="font-semibold text-gray-800 text-sm">${escapeHtml(entry.title)}</h4>
+                  ${entry.description ? `<p class="text-xs text-gray-500 mt-1 line-clamp-1">${escapeHtml(entry.description)}</p>` : ''}
+                  <div class="mt-1 flex flex-wrap gap-2">
+                    ${entry.verification_level !== 'tier_3' ? `
+                    <button class="text-[11px] text-purple-700 underline" onclick="openTier3Modal('${entry.entry_id}')">
+                      Mark as Externally Audited (Tier 3)
+                    </button>` : ''}
+                    <button class="text-[11px] text-gray-600 underline" onclick="openShareCard('${entry.entry_id}')">
+                      View share card
+                    </button>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-bold text-purple-700">${formatNumber(entry.people_impacted)} ${escapeHtml(entry.impact_unit || 'people')}</p>
+                  <p class="text-xs text-gray-400">SCP: ${formatNumber(entry.scp_earned)}</p>
+                </div>
               </div>
-            </div>
-          </div>`;
+            </div>`;
+        }
       }).join('');
     }
 
@@ -532,13 +990,131 @@
       finally { btn.disabled = false; spinner.classList.add('hidden'); }
     }
 
+    function openTier3Modal(entryId) {
+      const idInput = document.getElementById('tier3EntryId');
+      const nameInput = document.getElementById('tier3AuditorName');
+      const orgInput = document.getElementById('tier3AuditorOrg');
+      const notesInput = document.getElementById('tier3AuditorNotes');
+      if (idInput) idInput.value = entryId;
+      if (nameInput) nameInput.value = '';
+      if (orgInput) orgInput.value = '';
+      if (notesInput) notesInput.value = '';
+      openModal('tier3Modal');
+    }
+
+    async function submitTier3() {
+      const idInput = document.getElementById('tier3EntryId');
+      const nameInput = document.getElementById('tier3AuditorName');
+      const orgInput = document.getElementById('tier3AuditorOrg');
+      const notesInput = document.getElementById('tier3AuditorNotes');
+      const btn = document.getElementById('tier3SubmitBtn');
+      const spinner = document.getElementById('tier3Spinner');
+      if (!idInput || !nameInput) return;
+      const entryId = idInput.value;
+      const auditorName = nameInput.value.trim();
+      if (!auditorName) {
+        showToast('Auditor name is required.', 'error');
+        return;
+      }
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      try {
+        const res = await fetch(`/api/impact/entries/${encodeURIComponent(entryId)}/mark-tier3`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            auditor_name: auditorName,
+            auditor_org: orgInput ? orgInput.value.trim() : '',
+            auditor_notes: notesInput ? notesInput.value.trim() : '',
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to mark entry as Tier 3');
+        closeModal('tier3Modal');
+        showToast(data.message || 'Marked as Externally Audited (Tier 3).', 'success');
+        loadStats();
+        loadEntries();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+      }
+    }
+
+    function openShareCard(entryId) {
+      const url = `/share-card.html?entry=${encodeURIComponent(entryId)}`;
+      window.open(url, '_blank', 'width=600,height=700');
+    }
+
+    async function handleCreateBusinessEntry(e) {
+      e.preventDefault();
+      const form = e.target;
+      const btn = document.getElementById('createBusinessBtn');
+      const spinner = document.getElementById('createBusinessSpinner');
+      const formData = new FormData(form);
+      const raw = Object.fromEntries(formData.entries());
+      const body = {
+        title: raw.title || '',
+        description: raw.description || '',
+        waste_primary: raw.waste_primary || '',
+        waste_secondary: raw.waste_secondary || '',
+        improvement_method: raw.improvement_method || '',
+        usd_saved: raw.usd_saved || '',
+        outcome_statement: raw.outcome_statement || '',
+        activity_date: raw.activity_date || '',
+        evidence_link: raw.evidence_link || '',
+        send_for_verification: !!raw.send_for_verification,
+        verifier_name: raw.verifier_name || '',
+        verifier_email: raw.verifier_email || '',
+        verifier_role: raw.verifier_role || '',
+      };
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      try {
+        const res = await fetch('/api/partner/impact/business-entry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create business outcome entry');
+        closeModal('createBusinessModal');
+        form.reset();
+        showToast(data.message || 'Business Outcome logged successfully!', 'success');
+        loadStats();
+        loadEntries();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+      }
+    }
+
     async function handleCreateEntry(e) {
       e.preventDefault();
       const form = e.target; const btn = document.getElementById('createEntryBtn'); const spinner = document.getElementById('createEntrySpinner');
-      const formData = new FormData(form); const body = Object.fromEntries(formData.entries());
+      const formData = new FormData(form); const raw = Object.fromEntries(formData.entries());
+      const body = {
+        title: raw.title || '',
+        description: raw.description || '',
+        esg_category: raw.esg_category || '',
+        activity_key: raw.activity_key || '',
+        people_impacted: raw.people_impacted || '',
+        hours_contributed: raw.hours_contributed || '',
+        activity_date: raw.activity_date || '',
+        evidence_link: raw.evidence_link || '',
+        send_for_verification: !!raw.send_for_verification,
+        verifier_name: raw.verifier_name || '',
+        verifier_email: raw.verifier_email || '',
+        verifier_role: raw.verifier_role || ''
+      };
       btn.disabled = true; spinner.classList.remove('hidden');
       try {
-        const res = await fetch('/api/impact/entries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
+        const res = await fetch('/api/partner/impact/esg-entry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(body) });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create entry');
         closeModal('createEntryModal'); form.reset();
@@ -723,12 +1299,12 @@
 
       const s = myStats;
       const cat = s.category_breakdown || { environmental: {people:0,hours:0,usd:0}, social: {people:0,hours:0,usd:0}, governance: {people:0,hours:0,usd:0} };
-      const ver = s.verification_breakdown || { tier_1: 0, tier_2: 0, tier_3: 0, tier_4: 0 };
+      const ver = s.verification_breakdown || { tier_1: 0, tier_2: 0, tier_3: 0 };
       const totalEntries = s.total_entries || 0;
       const t1Pct = totalEntries > 0 ? ((ver.tier_1 / totalEntries) * 100).toFixed(1) : '0.0';
       const t2Pct = totalEntries > 0 ? ((ver.tier_2 / totalEntries) * 100).toFixed(1) : '0.0';
       const t3Pct = totalEntries > 0 ? ((ver.tier_3 / totalEntries) * 100).toFixed(1) : '0.0';
-      const t4Pct = totalEntries > 0 ? ((ver.tier_4 / totalEntries) * 100).toFixed(1) : '0.0';
+      const t4Pct = totalEntries > 0 ? (((ver.tier_4 || 0) / totalEntries) * 100).toFixed(1) : '0.0';
       const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
       const fmtNum = (n) => { const v = parseFloat(n) || 0; return v.toLocaleString('en-US', { maximumFractionDigits: 0 }); };
@@ -877,6 +1453,38 @@
       const reportWindow = window.open('', '_blank');
       reportWindow.document.write(html);
       reportWindow.document.close();
+    }
+
+    function downloadBulkTemplate() {
+      const header = 'type,esg_category,activity_key,title,description,people_impacted,hours_contributed,activity_date,evidence_link,waste_primary,waste_secondary,improvement_method,usd_saved,outcome_statement';
+      const example1 = 'esg,social,social_employee_volunteering,Team volunteering day,Employees spent the day at a food bank,25,40,2026-03-01,https://example.com/photo,,,,, ';
+      const example2 = 'business,,,,Automated invoice flow,,,,https://example.com/report,WAI,EXP,automation,45000,Eliminated 2 FTE manual processing';
+      const csv = [header, example1, example2].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'impact_log_bulk_template.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function runBulkUpload() {
+      const csvInput = document.getElementById('bulkCsvInput');
+      if (!csvInput || !csvInput.value.trim()) { showToast('Please paste CSV content first.', 'error'); return; }
+      const btn = document.getElementById('bulkUploadBtn');
+      const spinner = document.getElementById('bulkUploadSpinner');
+      const resultDiv = document.getElementById('bulkUploadResult');
+      btn.disabled = true; spinner.classList.remove('hidden');
+      fetch('/api/partner/impact/bulk-upload', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ csv_content: csvInput.value })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { resultDiv.innerHTML = `<p class="text-red-600 font-semibold">${data.error}</p>`; }
+        else { resultDiv.innerHTML = `<p class="text-green-700 font-semibold">Imported ${data.success_rows || 0} rows. ${data.error_rows || 0} errors.</p>`; loadStats(); loadEntries(); }
+      })
+      .catch(err => { resultDiv.innerHTML = `<p class="text-red-600">${err.message}</p>`; })
+      .finally(() => { btn.disabled = false; spinner.classList.add('hidden'); });
     }
     </script>
 </body>
