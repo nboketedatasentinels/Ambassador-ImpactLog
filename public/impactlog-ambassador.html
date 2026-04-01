@@ -1023,7 +1023,7 @@
     }
 
     // ---- Export Impact Report ----
-    function exportImpactReport() {
+    async function exportImpactReport() {
       if (!myStats || !myStats.category_breakdown) {
         showToast('Loading stats... please try again in a moment.', 'error');
         loadStats();
@@ -1042,6 +1042,42 @@
 
       const fmtNum = (n) => { const v = parseFloat(n) || 0; return v.toLocaleString('en-US', { maximumFractionDigits: 0 }); };
       const fmtUsd = (n) => { const v = parseFloat(n) || 0; return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+      const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      };
+
+      // Calculate combined ESG + Business value
+      const esgUsd = s.esg_usd_value || s.total_usd_value || 0;
+      const bizUsd = s.business_usd_value || 0;
+      const totalImpactValue = esgUsd + bizUsd;
+
+      // Fetch business outcome entries
+      let businessOutcomes = [];
+      try {
+        const entriesRes = await fetch('/api/ambassador/impact/entries', { credentials: 'include' });
+        if (entriesRes.ok) {
+          const entriesData = await entriesRes.json();
+          businessOutcomes = (entriesData.entries || []).filter(e => e.impact_type === 'business_outcome').slice(0, 25);
+        }
+      } catch (err) {
+        console.error('Failed to fetch business outcomes for report:', err);
+      }
+
+      // Build business outcomes table rows
+      let bizTableRows = '';
+      if (businessOutcomes.length === 0) {
+        bizTableRows = '<tr><td colspan="4" style="text-align:center; color:#9ca3af;">No Business Outcome entries yet.</td></tr>';
+      } else {
+        bizTableRows = businessOutcomes.map(e => `
+          <tr>
+            <td>${escapeHtml(e.outcome_statement || e.title || '')}</td>
+            <td>${fmtUsd(e.usd_value)}</td>
+            <td>${escapeHtml(e.waste_primary || '')}${e.waste_secondary ? ' / ' + escapeHtml(e.waste_secondary) : ''}</td>
+            <td>${escapeHtml(e.improvement_method || '')}</td>
+          </tr>
+        `).join('');
+      }
 
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1057,14 +1093,14 @@
     .period { color: #374151; font-size: 14px; font-weight: 600; margin-bottom: 32px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px; }
     .kpi-card { border: 2px solid #e9d5ff; border-radius: 12px; padding: 24px; text-align: center; }
-    .kpi-value { font-size: 40px; font-weight: 800; color: #4b0d7f; }
+    .kpi-value { font-size: 36px; font-weight: 800; color: #4b0d7f; }
     .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #6b7280; margin-top: 4px; }
-    h2 { font-size: 22px; font-weight: 700; color: #4b0d7f; margin-bottom: 16px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
-    th { background: #4b0d7f; color: #fff; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    h2 { font-size: 22px; font-weight: 700; color: #4b0d7f; margin-bottom: 16px; margin-top: 32px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+    th { background: #4b0d7f; color: #fff; padding: 10px 14px; text-align: left; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
     th:first-child { border-radius: 8px 0 0 0; }
     th:last-child { border-radius: 0 8px 0 0; }
-    td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #374151; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #374151; }
     tr:last-child td { border-bottom: none; }
     .disclosure { margin-top: 40px; padding-top: 24px; border-top: 2px solid #e9d5ff; }
     .disclosure h2 { font-size: 20px; margin-bottom: 12px; }
@@ -1102,11 +1138,11 @@
     </div>
     <div class="kpi-card">
       <div class="kpi-value">${fmtNum(s.total_hours)}</div>
-      <div class="kpi-label">Hours Contributed</div>
+      <div class="kpi-label">Hours Contributed (ESG)</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-value">${fmtUsd(s.total_usd_value)}</div>
-      <div class="kpi-label">Social Value Created</div>
+      <div class="kpi-value">${fmtUsd(totalImpactValue)}</div>
+      <div class="kpi-label">Total Impact Value (ESG + Business)</div>
     </div>
   </div>
 
@@ -1156,24 +1192,37 @@
         <td>${t1Pct}%</td>
       </tr>
       <tr>
-        <td>Tier 2 &ndash; Partner Verified</td>
+        <td>Tier 2 &ndash; Partner / Manager Verified</td>
         <td>${t2Pct}%</td>
       </tr>
       <tr>
         <td>Tier 3 &ndash; Externally Audited</td>
         <td>${t3Pct}%</td>
       </tr>
+    </tbody>
+  </table>
+
+  <h2>Business Outcomes (Operational Value)</h2>
+  <table>
+    <thead>
       <tr>
-        <td>Tier 4 &ndash; Certified</td>
-        <td>${t4Pct}%</td>
+        <th>Outcome</th>
+        <th>USD Saved / Created</th>
+        <th>Waste Category</th>
+        <th>Method</th>
       </tr>
+    </thead>
+    <tbody>
+      ${bizTableRows}
     </tbody>
   </table>
 
   <div class="disclosure">
     <h2>Methodology &amp; Disclosure</h2>
-    <p>Impact entries may be self-reported (Tier 1) or supported by partner validation and/or evidence (Tier 2+). USD social value figures are estimated by the reporting user and are not independently audited. "People Impacted" reflects the cumulative reach of activities logged by this individual through the Transformation Leader platform.</p>
-    <p>This report is generated for personal reference and transparent impact tracking. It is not an audited ESG performance document. Social sharing of this report is promotional in nature and must not be used as evidence of ESG performance or verification.</p>
+    <p><strong>ESG Social Value (Benchmark-based).</strong> USD social value figures in this report are calculated using published benchmark rates applied to verified impact quantities. Impact-based values use sector-specific cost proxies (e.g. training cost per participant from ATD, social cost of carbon from US EPA IWG, tree planting costs from One Tree Planted). Volunteer time is valued at the Independent Sector's nationally recognised rate ($33.49/hour, 2024).</p>
+    <p>All rates are reviewed annually and stored at the time of entry for audit purposes. These figures represent estimated social value created or costs avoided. They do not represent cash transactions, revenue, or audited financial outcomes. Verification tiers indicate the level of external validation applied to the underlying activity data.</p>
+    <p><strong>Business Outcomes (Operational Value).</strong> Business Outcome values are entered directly by users and represent actual operational savings or revenue created. Where a manager or finance contact has verified the figure, this is noted in the verification status (Tier 2).</p>
+    <p>Reports produced from this Impact Log are intended for transparent internal and stakeholder communication. They do not constitute audited financial statements or ESG assurance reports.</p>
   </div>
 
   <div class="footer">
